@@ -30,6 +30,11 @@ public class Main {
 
             System.out.println("Total de reservas: " + reservas.size());
 
+
+            GenArchivos generador = new GenArchivos();
+            generador.generarArchivos(reservas, "ListasReservas");
+
+
         } catch (IOException e) {
             System.out.println("No se pudo leer el archivo CSV.");
             e.printStackTrace();
