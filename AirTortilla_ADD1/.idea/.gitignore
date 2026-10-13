@@ -1,3 +1,6 @@
-# Archivos ignorados por defecto
 /shelf/
 /workspace.xml
+
+data/reservas.csv
+
+ListasReservas/
