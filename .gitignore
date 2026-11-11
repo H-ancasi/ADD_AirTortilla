@@ -1,0 +1,8 @@
+# IntelliJ IDEA
+.idea/
+
+# Archivos CSV generados
+/ListasReservas/
+
+# Configuración personal de MySQL
+/AirTortilla_ADD1/src/main/resources/db.properties
