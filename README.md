@@ -32,10 +32,11 @@ Para poder ejecutar AirTortilla en otro ordenador hace falta tener instalado:
 
 - Java JDK 21.
 - IntelliJ IDEA (o un entorno compatible con proyectos Maven).
-- MySQL Server.
-- MySQL Workbench, para importar y gestionar la base de datos.
+- Docker Desktop.
 
 El proyecto utiliza Maven para gestionar sus dependencias, por lo que IntelliJ puede descargarlas automáticamente al abrirlo.
+
+Docker Compose se encarga de iniciar MySQL, crear la base de datos y sus tablas e importar las reservas de ejemplo. Así no hace falta instalar MySQL Server ni configurar manualmente la base de datos.
 
 ## ¿Cómo puedo instalar y ejecutar el proyecto?
 
@@ -47,58 +48,43 @@ Descargar el repositorio desde GitHub y abrir la carpeta `AirTortilla_ADD1` con 
 
 Una vez abierto, IntelliJ debería reconocer el proyecto Maven a través del archivo `pom.xml`. Si aparece la opción de cargar o sincronizar Maven, hay que aceptarla para que se descarguen las dependencias necesarias.
 
-### 2. Crear la base de datos
+### 2. Iniciar la base de datos con Docker
 
-Abrir MySQL Workbench y conectarse al servidor MySQL local.
+Abrir Docker Desktop y comprobar que está funcionando.
 
-En la carpeta principal del proyecto se encuentra el archivo `air_tortilla.sql`. Hay que abrirlo desde MySQL Workbench y ejecutar el script con el botón del rayo.
+Después, abrir una terminal dentro de la carpeta `AirTortilla_ADD1`, donde se encuentra el archivo `compose.yaml`, y ejecutar:
 
-Este archivo crea la base de datos `air_tortilla`, sus tres tablas (`reservas`, `usuarios` e `historial_cambios`) y añade algunas reservas de ejemplo.
-
-**Importante:** el script contiene instrucciones para eliminar las tablas existentes antes de crearlas de nuevo. Por tanto, debe ejecutarse sobre una instalación nueva o una base de datos que se pueda reemplazar, ya que se perderán los datos anteriores de esas tablas.
-
-### 3. Crear un usuario para la conexión
-
-Para que el programa pueda conectarse a MySQL, hace falta utilizar una cuenta que tenga permisos sobre la base de datos.
-
-Se puede crear una cuenta específica para el programa ejecutando estas instrucciones en MySQL Workbench:
-
-```sql
-CREATE USER 'airtortilla_app'@'localhost'
-IDENTIFIED BY 'elige_una_contraseña';
-
-GRANT SELECT, INSERT, UPDATE, DELETE
-ON air_tortilla.*
-TO 'airtortilla_app'@'localhost';
-
-FLUSH PRIVILEGES;
+```bash
+docker compose up -d
 ```
 
-Hay que sustituir `elige_una_contraseña` por una contraseña propia. También se puede utilizar otra cuenta de MySQL que ya exista, siempre que tenga los permisos necesarios.
+Este comando descarga la imagen de MySQL si todavía no está disponible y crea el contenedor con la configuración necesaria.
 
-### 4. Configurar la conexión del programa
+Al iniciarse por primera vez, Docker Compose prepara automáticamente la base de datos `air_tortilla`, crea las tablas `reservas`, `usuarios` e `historial_cambios` e importa las reservas de ejemplo del archivo `air_tortilla_completo.sql`.
+
+No es necesario importar el archivo SQL manualmente desde MySQL Workbench.
+
+**Importante:** la importación automática del SQL solamente se realiza cuando se inicializa la base de datos por primera vez. Si se vuelve a iniciar el contenedor posteriormente, se conservan los datos que ya existan.
+
+### 3. Configurar la conexión del programa
 
 Dentro de `src/main/resources` se encuentra el archivo `db.example.properties`, que sirve como plantilla para configurar la conexión.
 
 Hay que hacer una copia de ese archivo y llamar a la copia `db.properties`, dejándola en la misma carpeta.
 
-El contenido tiene este formato:
+Con la configuración de Docker Compose incluida en el proyecto, el contenido debe ser:
 
 ```properties
-db.url=jdbc:mysql://localhost:3304/air_tortilla
+db.url=jdbc:mysql://localhost:3307/air_tortilla
 db.username=airtortilla_app
-db.password=TU_CONTRASEÑA
+db.password=airtortilla_local
 ```
 
-Hay que revisar los tres valores:
+Estos datos corresponden a la configuración local incluida en `compose.yaml`. Si se modifica esa configuración, también habrá que actualizar los datos de conexión.
 
-- `db.url`: debe contener el puerto que utiliza el servidor MySQL del ordenador. En mi caso utilizo el puerto `3304`, pero puede ser diferente.
-- `db.username`: el nombre de usuario de MySQL que se haya creado o elegido.
-- `db.password`: la contraseña correspondiente a ese usuario.
+Es importante que el archivo se llame exactamente `db.properties`, ya que es el que utiliza el programa para conectarse a la base de datos. Este archivo no se incluye en GitHub porque contiene las credenciales de conexión de cada ordenador.
 
-Es importante que el archivo se llame exactamente `db.properties`, ya que es el que utiliza el programa para conectarse a la base de datos. Este archivo no se incluye en GitHub porque contiene las credenciales personales de cada ordenador.
-
-### 5. Crear el primer administrador
+### 4. Crear el primer administrador
 
 Como la base de datos de ejemplo no incluye usuarios, primero hay que crear un administrador para poder iniciar sesión.
 
@@ -108,13 +94,23 @@ Hay que introducir el nombre de usuario y la contraseña que se quieran utilizar
 
 Una vez creado, ya se puede iniciar sesión desde `Main.java`.
 
-### 6. Ejecutar el programa
+### 5. Ejecutar el programa
 
 Por último, abrir `Main.java` y ejecutar el método `main`.
 
 Al iniciar, aparecerá el menú de inicio de sesión. Hay que introducir las credenciales del administrador creado anteriormente.
 
 A partir de ahí se podrán utilizar las opciones disponibles según el tipo de usuario. Para salir antes de iniciar sesión, se pueden dejar vacíos tanto el usuario como la contraseña.
+
+### 6. Detener Docker
+
+Cuando se termine de utilizar el programa, se puede abrir una terminal en la carpeta `AirTortilla_ADD1` y ejecutar:
+
+```bash
+docker compose down
+```
+
+Esto detiene y elimina el contenedor, pero conserva el volumen donde se guardan los datos de MySQL. Para volver a utilizar el programa, basta con ejecutar otra vez `docker compose up -d`.
 
 ## ¿Qué he probado?
 
@@ -123,3 +119,5 @@ He probado la conexión con MySQL, el inicio de sesión con usuarios correctos e
 También he comprobado la creación de usuarios, el rechazo de nombres de usuario duplicados y las operaciones de insertar, modificar y eliminar reservas.
 
 Por último, he comprobado que los cambios se registran en el historial, que los localizadores se actualizan correctamente y que los archivos CSV se generan utilizando los datos guardados en la base de datos.
+
+Además, he probado el funcionamiento de Docker Compose, comprobando que se crea la base de datos, se importan las reservas de ejemplo y el programa Java puede conectarse al contenedor MySQL.

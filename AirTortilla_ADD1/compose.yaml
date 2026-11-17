@@ -1,0 +1,22 @@
+
+services:
+  mysql:
+    image: mysql:8.0.44
+    container_name: airtortilla-mysql
+    restart: unless-stopped
+
+    environment:
+      MYSQL_ROOT_PASSWORD: root_air_tortilla_local
+      MYSQL_DATABASE: air_tortilla
+      MYSQL_USER: airtortilla_app
+      MYSQL_PASSWORD: airtortilla_local
+
+    ports:
+      - "3307:3306"
+
+    volumes:
+      - air_tortilla_data:/var/lib/mysql
+      - ./air_tortilla_completo.sql:/docker-entrypoint-initdb.d/01-air-tortilla.sql:ro
+
+volumes:
+  air_tortilla_data:
